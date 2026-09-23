@@ -728,29 +728,6 @@ function ResultScreen({
 }) {
   const untung = result.laba >= 0;
   const lastMonth = currentMonth >= TOTAL_BULAN;
-  const rows: { label: string; value: string; icon: React.ReactNode }[] = [
-    {
-      label: "Total Ayam",
-      value: `${result.jumlahAyam.toLocaleString("id-ID")} ekor`,
-      icon: <Bird className="size-5 text-primary" />,
-    },
-    {
-      label: "Total Produksi Telur",
-      value: `${result.produksiPerBulan.toLocaleString("id-ID")} butir/bulan`,
-      icon: <Egg className="size-5 text-primary" />,
-    },
-    {
-      label: "Total Pendapatan",
-      value: formatRupiah(result.pendapatanBulanan),
-      icon: <Coins className="size-5 text-profit" />,
-    },
-    {
-      label: "Total Biaya Operasional",
-      value: formatRupiah(result.biayaOperasional),
-      icon: <Wheat className="size-5 text-loss" />,
-    },
-  ];
-
   return (
     <div className="animate-card-in w-full">
       <div className="mb-6 text-center">
@@ -765,18 +742,61 @@ function ResultScreen({
 
       <div className="rounded-3xl border border-border bg-card p-5 shadow-xl sm:p-6">
         <div className="space-y-3">
-          {rows.map((r) => (
-            <div
-              key={r.label}
-              className="flex items-center justify-between gap-3 rounded-xl bg-secondary px-4 py-3"
-            >
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary px-4 py-3">
+            <span className="flex items-center gap-2 text-sm font-bold text-secondary-foreground">
+              <Bird className="size-5 text-primary" />
+              Total Ayam
+            </span>
+            <span className="text-sm font-extrabold text-foreground">
+              {result.jumlahAyam.toLocaleString("id-ID")} ekor
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary px-4 py-3">
+            <span className="flex items-center gap-2 text-sm font-bold text-secondary-foreground">
+              <Egg className="size-5 text-primary" />
+              Total Produksi Telur
+            </span>
+            <span className="text-sm font-extrabold text-foreground">
+              {result.produksiPerBulan.toLocaleString("id-ID")} butir/bulan
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-secondary px-4 py-3">
+            <span className="flex items-center gap-2 text-sm font-bold text-secondary-foreground">
+              <Wheat className="size-5 text-loss" />
+              Total Biaya Operasional
+            </span>
+            <span className="text-sm font-extrabold text-foreground">
+              {formatRupiah(result.biayaOperasional)}
+            </span>
+          </div>
+
+          <div className="flex flex-col gap-2 rounded-xl bg-secondary px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
               <span className="flex items-center gap-2 text-sm font-bold text-secondary-foreground">
-                {r.icon}
-                {r.label}
+                <Coins className="size-5 text-profit" />
+                Total Pendapatan
               </span>
-              <span className="text-sm font-extrabold text-foreground">{r.value}</span>
+              <span className="text-sm font-extrabold text-foreground">
+                {formatRupiah(result.pendapatanBulanan)}
+              </span>
             </div>
-          ))}
+            <div className="ml-7 flex flex-col gap-1 border-l-2 border-border pl-3 text-xs font-semibold text-muted-foreground">
+              <div className="flex justify-between">
+                <span>Rincian Penjualan:</span>
+                <span>
+                  {formatRupiah(result.hargaJualTelur)} × {result.produksiPerBulan.toLocaleString("id-ID")} butir
+                </span>
+              </div>
+              <div className="mt-1 flex justify-between border-t border-border/50 pt-1">
+                <span>Pendapatan - Biaya:</span>
+                <span>
+                  {formatRupiah(result.pendapatanBulanan)} - {formatRupiah(result.biayaOperasional)}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
