@@ -1,5 +1,5 @@
 export const MODAL_AWAL = 50_000_000;
-export const HARGA_AYAM = 125_000;
+export const HARGA_AYAM = 50_000;
 export const HARGA_TELUR_DASAR = 2_000;
 export const BIAYA_OPERASIONAL_DASAR = 6_300_000;
 export const LAYING_RATE = 0.8;
