@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import confetti from "canvas-confetti";
 import {
   ArrowRight,
   Bird,
@@ -56,7 +57,7 @@ export const Route = createFileRoute("/")({
   component: EggBoss,
 });
 
-type Screen = "menu" | "budgeting" | "manage" | "event" | "result" | "final";
+type Screen = "menu" | "budgeting" | "manage" | "event" | "result" | "final" | "celebration";
 
 function EggBoss() {
   const [screen, setScreen] = useState<Screen>("menu");
@@ -223,6 +224,13 @@ function EggBoss() {
             totalLaba={totalLaba}
             kehabisanModal={kehabisanModal}
             modal={modal}
+            onCelebration={() => setScreen("celebration")}
+          />
+        )}
+        {screen === "celebration" && (
+          <CelebrationScreen
+            key="celebration"
+            totalLaba={totalLaba}
             onRestart={reset}
           />
         )}
@@ -858,13 +866,13 @@ function FinalScreen({
   totalLaba,
   kehabisanModal,
   modal,
-  onRestart,
+  onCelebration,
 }: {
   history: MonthRecord[];
   totalLaba: number;
   kehabisanModal: boolean;
   modal: number;
-  onRestart: () => void;
+  onCelebration: () => void;
 }) {
   const [bonusPoint, setBonusPoint] = useState(false);
   const poin = hitungSkorAkhir(totalLaba, bonusPoint);
@@ -989,8 +997,107 @@ function FinalScreen({
       </div>
 
       <button
-        onClick={onRestart}
+        onClick={onCelebration}
         className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 font-display text-lg font-extrabold text-primary-foreground shadow-lg shadow-primary/40 transition-transform hover:scale-[1.02] active:scale-95"
+      >
+        <Trophy className="size-5" />
+        Lihat Pencapaian Akhir
+      </button>
+    </div>
+  );
+}
+
+/* ---------------- Celebration Screen ---------------- */
+
+function getEpithet(totalPoints: number): { title: string; emoji: string } {
+  if (totalPoints >= 30) return { title: "Raja Peternakan", emoji: "👑" };
+  if (totalPoints >= 25) return { title: "Pengusaha Telur", emoji: "🥚" };
+  if (totalPoints >= 20) return { title: "Peternak Besar", emoji: "🏭" };
+  if (totalPoints >= 10) return { title: "Peternak Menengah", emoji: "🚜" };
+  if (totalPoints >= 5) return { title: "Peternak Berkembang", emoji: "🌱" };
+  if (totalPoints > -20) return { title: "Peternak Kecil", emoji: "🛖" };
+  return { title: "Peternak Pemula", emoji: "🐣" };
+}
+
+function CelebrationScreen({
+  totalLaba,
+  onRestart,
+}: {
+  totalLaba: number;
+  onRestart: () => void;
+}) {
+  const totalPoints = hitungSkorAkhir(totalLaba);
+  const epithet = getEpithet(totalPoints);
+
+  useEffect(() => {
+    if (totalPoints >= 5) {
+      const end = Date.now() + 3 * 1000;
+      const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1", "#ffd700"];
+
+      const frame = () => {
+        if (Date.now() > end) return;
+
+        confetti({
+          particleCount: 3,
+          angle: 60,
+          spread: 55,
+          startVelocity: 60,
+          origin: { x: 0, y: 0.5 },
+          colors: colors,
+        });
+        confetti({
+          particleCount: 3,
+          angle: 120,
+          spread: 55,
+          startVelocity: 60,
+          origin: { x: 1, y: 0.5 },
+          colors: colors,
+        });
+
+        requestAnimationFrame(frame);
+      };
+
+      frame();
+    }
+  }, [totalPoints]);
+
+  return (
+    <div className="animate-fade-in-up flex w-full flex-col items-center text-center">
+      <div className="mb-6">
+        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          Pencapaian Akhir
+        </p>
+        <h2 className="mt-2 font-display text-4xl font-extrabold text-foreground sm:text-5xl">
+          Selamat! 🎉
+        </h2>
+      </div>
+
+      <div className="w-full max-w-sm rounded-3xl border border-border bg-card/80 p-8 shadow-2xl backdrop-blur-md">
+        <div className="mx-auto mb-4 flex size-24 items-center justify-center rounded-full bg-yolk/20">
+          <span className="text-6xl">{epithet.emoji}</span>
+        </div>
+
+        <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+          Julukan Anda
+        </p>
+        <h3 className="mt-1 font-display text-3xl font-extrabold text-primary">
+          {epithet.title}
+        </h3>
+
+        <div className="mt-6 flex items-center justify-between rounded-2xl bg-primary px-5 py-4">
+          <span className="flex items-center gap-2 font-display text-lg font-extrabold text-primary-foreground">
+            <Trophy className="size-6" />
+            Total Poin
+          </span>
+          <span className="font-display text-3xl font-extrabold text-primary-foreground">
+            {totalPoints > 0 ? `+${totalPoints}` : totalPoints} ⭐
+          </span>
+        </div>
+      </div>
+
+      <button
+        onClick={onRestart}
+        className="mt-8 flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 font-display text-lg font-extrabold text-primary-foreground shadow-lg shadow-primary/40 transition-transform hover:scale-[1.02] active:scale-95"
       >
         <RotateCcw className="size-5" />
         Main Lagi
