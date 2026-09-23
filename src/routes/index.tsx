@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   Bird,
@@ -11,9 +11,12 @@ import {
   Pill,
   RotateCcw,
   Sparkles,
+  Target,
   TrendingDown,
   TrendingUp,
   Trophy,
+  Volume2,
+  VolumeX,
   Wallet,
   Wheat,
 } from "lucide-react";
@@ -67,9 +70,29 @@ function EggBoss() {
   const [beliAyam, setBeliAyam] = useState(0);
   const [event, setEvent] = useState<GameEvent | null>(null);
 
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+
+  const startMusic = () => {
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => { });
+    }
+  };
+
+  const startGame = () => {
+    setScreen("budgeting");
+  };
+
+  const toggleMute = () => {
+    if (audioRef.current) {
+      audioRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   const anggaran = useMemo(
-    () => hitungAnggaran(jumlahAyam, beliAyam),
-    [jumlahAyam, beliAyam],
+    () => hitungAnggaran(jumlahAyam, beliAyam, currentMonth),
+    [jumlahAyam, beliAyam, currentMonth],
   );
   const totalAyam = anggaran.totalAyam;
   const modalTersisa = modal - anggaran.totalPengeluaran;
@@ -127,10 +150,28 @@ function EggBoss() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
+      {/* Fixed corner Audio toggle button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={toggleMute}
+          className="flex size-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-transform hover:scale-105 active:scale-95"
+          title={isMuted ? "Unmute Musik" : "Mute Musik"}
+          aria-label={isMuted ? "Unmute Musik" : "Mute Musik"}
+        >
+          {isMuted ? (
+            <VolumeX className="size-5 text-muted-foreground" />
+          ) : (
+            <Volume2 className="size-5 text-primary" />
+          )}
+        </button>
+      </div>
+
+      <audio ref={audioRef} src="/backsound.mp3" loop preload="auto" />
+
       <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center justify-center px-4 py-10">
         {screen === "menu" && (
-          <MenuScreen key="menu" onStart={() => setScreen("budgeting")} />
+          <MenuScreen key="menu" onStartMusic={startMusic} onEnterGame={startGame} />
         )}
         {screen === "budgeting" && (
           <BudgetScreen
@@ -198,39 +239,127 @@ function MonthBadge({ bulan }: { bulan: number }) {
   );
 }
 
-/* ---------------- Screen 0: Main Menu ---------------- */
+/* ---------------- Screen 0: Multi-Step Onboarding ---------------- */
 
-function MenuScreen({ onStart }: { onStart: () => void }) {
+function MenuScreen({
+  onStartMusic,
+  onEnterGame,
+}: {
+  onStartMusic: () => void;
+  onEnterGame: () => void;
+}) {
+  const [step, setStep] = useState(0);
+
+  const goStep1 = () => {
+    onStartMusic();
+    setStep(1);
+  };
+
   return (
-    <div className="animate-card-in flex w-full flex-col items-center text-center">
-      <div className="animate-egg-bounce mb-6 flex size-28 items-center justify-center rounded-full bg-yolk shadow-lg shadow-primary/30">
-        <Egg className="size-14 text-primary-foreground" strokeWidth={2.2} />
-      </div>
-      <h1 className="font-display text-5xl font-extrabold tracking-tight text-foreground sm:text-6xl">
-        EGG BOSS 🐔
-      </h1>
-      <p className="mt-2 font-display text-2xl font-bold text-primary">
-        Jadi Juragan Ayam Petelur!
-      </p>
-      <p className="mt-4 max-w-sm text-base font-semibold text-muted-foreground">
-        Kelola Anggaran • Rawat Ayam • Jual Telur • Raih Laba
-      </p>
-      <p className="mt-2 text-sm font-bold text-muted-foreground">
-        Bertahan dan raih laba selama {TOTAL_BULAN} bulan!
-      </p>
-      <div className="mt-6 rounded-2xl border border-border bg-card px-5 py-3 shadow-sm">
-        <p className="text-sm font-bold text-muted-foreground">Modal Awal Kamu</p>
-        <p className="font-display text-2xl font-extrabold text-foreground">
-          {formatRupiah(MODAL_AWAL)}
-        </p>
-      </div>
-      <button
-        onClick={onStart}
-        className="mt-8 inline-flex items-center gap-2 rounded-full bg-primary px-10 py-4 font-display text-xl font-extrabold text-primary-foreground shadow-lg shadow-primary/40 transition-transform hover:scale-105 active:scale-95"
-      >
-        <Play className="size-6" />
-        Mulai Bermain
-      </button>
+    <div className="flex w-full flex-col items-center justify-center text-center">
+      {/* ---- Step 0: Splash Screen ---- */}
+      {step === 0 && (
+        <div key="step-0" className="animate-fade-in-up flex flex-col items-center gap-6">
+          <div className="animate-egg-bounce flex size-32 items-center justify-center rounded-full bg-yolk shadow-xl shadow-primary/30">
+            <Egg className="size-16 text-primary-foreground" strokeWidth={2.2} />
+          </div>
+          <div>
+            <h1 className="font-display text-6xl font-extrabold tracking-tight text-foreground sm:text-7xl">
+              🐔 EGG BOSS
+            </h1>
+            <p className="mt-3 font-display text-2xl font-bold text-primary">
+              Jadi Juragan Ayam Petelur!
+            </p>
+          </div>
+          <button
+            onClick={goStep1}
+            className="animate-pulse-glow mt-4 inline-flex items-center gap-3 rounded-full bg-primary px-10 py-5 font-display text-xl font-extrabold text-primary-foreground shadow-lg shadow-primary/40 transition-transform hover:scale-105 active:scale-95"
+          >
+            <Play className="size-6 fill-current" />
+            Mulai Bermain
+          </button>
+        </div>
+      )}
+
+      {/* ---- Step 1: Modal Awal ---- */}
+      {step === 1 && (
+        <div key="step-1" className="animate-fade-in-up w-full max-w-sm">
+          <div className="rounded-3xl border border-border bg-card/80 p-8 shadow-2xl backdrop-blur-md">
+            <div className="mx-auto mb-5 flex size-20 items-center justify-center rounded-full bg-yolk/20">
+              <Wallet className="size-10 text-primary" />
+            </div>
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              Suntikan Dana
+            </p>
+            <p className="mt-3 font-display text-lg font-bold leading-relaxed text-foreground">
+              Anda mendapatkan suntikan dana awal sebesar{" "}
+              <span className="text-primary">{formatRupiah(MODAL_AWAL)}</span>.
+            </p>
+            <button
+              onClick={() => setStep(2)}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 font-display text-lg font-extrabold text-primary-foreground shadow-lg shadow-primary/40 transition-transform hover:scale-[1.02] active:scale-95"
+            >
+              Lanjut
+              <ArrowRight className="size-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ---- Step 2: Mekanik Dasar ---- */}
+      {step === 2 && (
+        <div key="step-2" className="animate-fade-in-up w-full max-w-sm">
+          <div className="rounded-3xl border border-border bg-card/80 p-8 shadow-2xl backdrop-blur-md">
+            <div className="mx-auto mb-5 flex size-20 items-center justify-center rounded-full bg-yolk/20">
+              <p className="text-[55px] text-primary">
+                🐔
+              </p>
+            </div>
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              Mekanik Dasar
+            </p>
+            <p className="mt-3 font-display text-lg font-bold leading-relaxed text-foreground">
+              Beli ayam seharga{" "}
+              <span className="text-primary">{formatRupiah(HARGA_AYAM)}/ekor</span>.{" "}
+              Kelola anggaran pakan, obat, dan hadapi berbagai kejadian tak
+              terduga di pasar.
+            </p>
+            <button
+              onClick={() => setStep(3)}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 font-display text-lg font-extrabold text-primary-foreground shadow-lg shadow-primary/40 transition-transform hover:scale-[1.02] active:scale-95"
+            >
+              Lanjut
+              <ArrowRight className="size-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ---- Step 3: Tujuan Game ---- */}
+      {step === 3 && (
+        <div key="step-3" className="animate-fade-in-up w-full max-w-sm">
+          <div className="rounded-3xl border border-border bg-card/80 p-8 shadow-2xl backdrop-blur-md">
+            <div className="mx-auto mb-5 flex size-20 items-center justify-center rounded-full bg-yolk/20">
+              <Trophy className="size-10 text-primary" />
+            </div>
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">
+              Tujuan Game
+            </p>
+            <p className="mt-3 font-display text-lg font-bold leading-relaxed text-foreground">
+              Bertahanlah selama {TOTAL_BULAN} bulan (1 Kuartal). Kumpulkan laba
+              setinggi-tingginya dan buktikan Anda adalah{" "}
+              <span className="text-primary">Egg Boss</span> sejati!
+            </p>
+            <button
+              onClick={onEnterGame}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 font-display text-lg font-extrabold text-primary-foreground shadow-lg shadow-primary/40 transition-transform hover:scale-[1.02] active:scale-95"
+            >
+              <Target className="size-5" />
+              Masuk ke Peternakan
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -269,7 +398,10 @@ function BudgetScreen(p: BudgetProps) {
       icon: <Home className="size-5 text-primary" />,
       label: "Kandang & Peralatan",
       value: a.biayaKandang,
-      hint: `${a.kelompokAyam} kelompok × Rp 400.000`,
+      hint:
+        p.currentMonth === 1
+          ? `${a.kelompokAyam} kelompok × Rp 400.000`
+          : "Rp 0 (Hanya dibayar pada Bulan 1)",
     },
     {
       icon: <Wallet className="size-5 text-primary" />,
@@ -298,17 +430,15 @@ function BudgetScreen(p: BudgetProps) {
       </div>
 
       <div
-        className={`mb-6 rounded-2xl border px-5 py-4 text-center shadow-sm ${
-          p.saldoMinus
-            ? "border-destructive/40 bg-destructive/10"
-            : "border-border bg-card"
-        }`}
+        className={`mb-6 rounded-2xl border px-5 py-4 text-center shadow-sm ${p.saldoMinus
+          ? "border-destructive/40 bg-destructive/10"
+          : "border-border bg-card"
+          }`}
       >
         <p className="text-sm font-bold text-muted-foreground">Sisa Kas</p>
         <p
-          className={`font-display text-3xl font-extrabold ${
-            p.saldoMinus ? "text-loss" : "text-profit"
-          }`}
+          className={`font-display text-3xl font-extrabold ${p.saldoMinus ? "text-loss" : "text-profit"
+            }`}
         >
           {formatRupiah(p.modalTersisa)}
         </p>
@@ -542,15 +672,13 @@ function EventScreen({
       ) : (
         <div
           key={event.id}
-          className={`animate-card-flip flex h-72 w-full max-w-xs flex-col items-center justify-center gap-3 rounded-3xl border-4 px-6 text-center shadow-xl ${
-            event.good ? "border-profit/50 bg-profit/10" : "border-loss/50 bg-loss/10"
-          }`}
+          className={`animate-card-flip flex h-72 w-full max-w-xs flex-col items-center justify-center gap-3 rounded-3xl border-4 px-6 text-center shadow-xl ${event.good ? "border-profit/50 bg-profit/10" : "border-loss/50 bg-loss/10"
+            }`}
         >
           <span className="text-6xl">{event.emoji}</span>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-widest ${
-              event.good ? "bg-profit/20 text-profit" : "bg-loss/20 text-loss"
-            }`}
+            className={`rounded-full px-3 py-1 text-xs font-extrabold uppercase tracking-widest ${event.good ? "bg-profit/20 text-profit" : "bg-loss/20 text-loss"
+              }`}
           >
             {event.good ? "Kabar Baik" : "Kabar Buruk"}
           </span>
@@ -644,14 +772,12 @@ function ResultScreen({
         </div>
 
         <div
-          className={`mt-4 flex items-center justify-between rounded-2xl px-5 py-4 ${
-            untung ? "bg-profit/15" : "bg-loss/15"
-          }`}
+          className={`mt-4 flex items-center justify-between rounded-2xl px-5 py-4 ${untung ? "bg-profit/15" : "bg-loss/15"
+            }`}
         >
           <span
-            className={`flex items-center gap-2 font-display text-lg font-extrabold ${
-              untung ? "text-profit" : "text-loss"
-            }`}
+            className={`flex items-center gap-2 font-display text-lg font-extrabold ${untung ? "text-profit" : "text-loss"
+              }`}
           >
             {untung ? (
               <TrendingUp className="size-6" />
@@ -661,9 +787,8 @@ function ResultScreen({
             {untung ? "Laba Bulan Ini" : "Rugi Bulan Ini"}
           </span>
           <span
-            className={`font-display text-2xl font-extrabold ${
-              untung ? "text-profit" : "text-loss"
-            }`}
+            className={`font-display text-2xl font-extrabold ${untung ? "text-profit" : "text-loss"
+              }`}
           >
             {formatRupiah(result.laba)}
           </span>
@@ -777,9 +902,8 @@ function FinalScreen({
                   </span>
                 </span>
                 <span
-                  className={`flex items-center gap-1 text-sm font-extrabold ${
-                    h.result.laba >= 0 ? "text-profit" : "text-loss"
-                  }`}
+                  className={`flex items-center gap-1 text-sm font-extrabold ${h.result.laba >= 0 ? "text-profit" : "text-loss"
+                    }`}
                 >
                   {formatRupiah(h.result.laba)}
                   {naik === null ? "" : naik ? "📈" : "📉"}
@@ -802,14 +926,12 @@ function FinalScreen({
         </div>
 
         <div
-          className={`mt-4 flex items-center justify-between rounded-2xl px-5 py-4 ${
-            untung ? "bg-profit/15" : "bg-loss/15"
-          }`}
+          className={`mt-4 flex items-center justify-between rounded-2xl px-5 py-4 ${untung ? "bg-profit/15" : "bg-loss/15"
+            }`}
         >
           <span
-            className={`flex items-center gap-2 font-display text-lg font-extrabold ${
-              untung ? "text-profit" : "text-loss"
-            }`}
+            className={`flex items-center gap-2 font-display text-lg font-extrabold ${untung ? "text-profit" : "text-loss"
+              }`}
           >
             {untung ? (
               <TrendingUp className="size-6" />
@@ -819,9 +941,8 @@ function FinalScreen({
             Total Laba 3 Bulan
           </span>
           <span
-            className={`font-display text-2xl font-extrabold ${
-              untung ? "text-profit" : "text-loss"
-            }`}
+            className={`font-display text-2xl font-extrabold ${untung ? "text-profit" : "text-loss"
+              }`}
           >
             {formatRupiah(totalLaba)}
           </span>
@@ -845,15 +966,13 @@ function FinalScreen({
           <button
             type="button"
             onClick={() => setBonusPoint((b) => !b)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              bonusPoint ? "bg-primary" : "bg-muted-foreground/30"
-            }`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${bonusPoint ? "bg-primary" : "bg-muted-foreground/30"
+              }`}
             aria-label="Toggle bonus poin"
           >
             <span
-              className={`inline-block size-4 transform rounded-full bg-white transition-transform ${
-                bonusPoint ? "translate-x-6" : "translate-x-1"
-              }`}
+              className={`inline-block size-4 transform rounded-full bg-white transition-transform ${bonusPoint ? "translate-x-6" : "translate-x-1"
+                }`}
             />
           </button>
         </div>
