@@ -409,7 +409,9 @@ function BudgetScreen(p: BudgetProps) {
       hint:
         p.currentMonth === 1
           ? `${a.kelompokAyam} kelompok × Rp 400.000`
-          : "Rp 0 (Hanya dibayar pada Bulan 1)",
+          : p.beliAyam > 0
+            ? `${Math.ceil(p.beliAyam / 10)} kelompok baru × Rp 400.000`
+            : "Rp 0 (Tambah ayam untuk kandang baru)",
     },
     {
       icon: <Wallet className="size-5 text-primary" />,

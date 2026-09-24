@@ -98,7 +98,12 @@ export function hitungAnggaran(
   const kelompokAyam = Math.ceil(totalAyam / 10);
   const biayaPakan = kelompokAyam * 200_000;
   const biayaObat = kelompokAyam * 25_000;
-  const biayaKandang = bulan === 1 ? kelompokAyam * 400_000 : 0;
+  const biayaKandang =
+    bulan === 1
+      ? kelompokAyam * 400_000
+      : ayamTambahan > 0
+        ? Math.ceil(ayamTambahan / 10) * 400_000
+        : 0;
   const biayaTetap = BIAYA_TETAP;
   const danaCadangan = Math.round(
     (biayaPakan + biayaObat + biayaKandang + biayaTetap) * 0.15,
